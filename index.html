@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- Locked viewport: no pinch-zoom, no double-tap zoom. Critical for an accurate ruler. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#11131a" />
+  <meta name="description" content="TrueRule — a physically accurate on-screen ruler for your phone or computer. Calibrate once with any bank card, then measure anything in inches or centimeters." />
+
+  <!-- Full-screen when added to the home screen on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TrueRule" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='1.5' y='7' width='21' height='10' rx='2.5' fill='%232563eb'/%3E%3Cg stroke='white' stroke-width='1.3' stroke-linecap='round'%3E%3Cline x1='5.5' y1='7' x2='5.5' y2='12'/%3E%3Cline x1='9' y1='7' x2='9' y2='13.5'/%3E%3Cline x1='12.5' y1='7' x2='12.5' y2='12'/%3E%3Cline x1='16' y1='7' x2='16' y2='13.5'/%3E%3Cline x1='19.5' y1='7' x2='19.5' y2='12'/%3E%3C/g%3E%3C/svg%3E" />
+
+  <title>TrueRule — accurate on-screen ruler</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- The ruler + measure line are drawn here -->
+  <canvas id="ruler"></canvas>
+
+  <!-- Two draggable measure points -->
+  <div class="handle" id="handleA" aria-label="Measure point A" role="slider" tabindex="0"><i></i></div>
+  <div class="handle" id="handleB" aria-label="Measure point B" role="slider" tabindex="0"><i></i></div>
+
+  <!-- One-time tip -->
+  <div id="hint" class="hint hidden">
+    <span>Tip: tap <b>Calibrate</b> and match a bank card for perfect accuracy.</span>
+    <button id="hintClose" aria-label="Dismiss tip">Got it</button>
+  </div>
+
+  <!-- Bottom control bar -->
+  <div class="controls" id="controls">
+    <button id="unitBtn" class="ctl" aria-label="Toggle units">
+      <span class="ctl-ico">&#8646;</span><span id="unitLabel">inches</span>
+    </button>
+    <div class="readout" id="readout">&#8597; —</div>
+    <button id="calBtn" class="ctl primary" aria-label="Calibrate screen">
+      <span class="ctl-ico">&#9974;</span><span>Calibrate</span>
+    </button>
+  </div>
+
+  <!-- Calibration overlay -->
+  <div id="cal" class="cal hidden" aria-hidden="true">
+    <div class="cal-card" id="calCard">
+      <div class="cal-chip"></div>
+      <div class="cal-strip"></div>
+      <div class="cal-resize" id="calResize" aria-label="Drag to resize">
+        <span>&#8597; drag to match your card</span>
+      </div>
+    </div>
+
+    <div class="cal-panel">
+      <h1>Calibrate your screen</h1>
+      <p>Lay a bank or ID card flat on the screen and resize the outline until its edges line up exactly. Standard cards are <b>85.6&nbsp;mm</b> wide worldwide, so this makes the ruler physically accurate.</p>
+      <div class="cal-info" id="calInfo">—</div>
+      <div class="cal-fine">
+        <button id="calMinus" aria-label="Smaller">&minus;</button>
+        <span>fine&nbsp;adjust</span>
+        <button id="calPlus" aria-label="Larger">+</button>
+      </div>
+      <div class="cal-actions">
+        <button id="calReset" class="ghost">Auto</button>
+        <button id="calCancel" class="ghost">Cancel</button>
+        <button id="calSave" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
