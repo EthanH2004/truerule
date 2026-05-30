@@ -4,7 +4,7 @@ A physically accurate on-screen ruler. Built phone-first, works anywhere. Hold a
 real object against your screen and read its true length — no weird scaling from
 different phone sizes, zoom, or scroll.
 
-**Live:** _(deploy link goes here)_
+**Live:** https://truerule.vercel.app
 
 ## Why it's actually accurate
 
