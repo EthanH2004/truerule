@@ -22,6 +22,7 @@ const CARD_LONG_MM = 85.6;                  // card long edge (the precise one)
 const CARD_SHORT_MM = 53.98;                // card short edge
 const STORE_SCALE = 'truerule.pxPerMM';
 const STORE_UNIT = 'truerule.unit';
+const STORE_SNAP = 'truerule.snap';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -75,6 +76,7 @@ const state = {
   scaleSource: 'guess',   // 'calibrated' | 'auto' | 'guess'
   deviceInfo: null,
   unit: 'in',             // 'in' | 'cm'
+  snap: false,            // snap measure points to the ruler grid
   A: { x: 0, y: 0 },
   B: { x: 0, y: 0 }
 };
@@ -146,8 +148,8 @@ function resize() {
       state.B = { x: Math.round(w * 0.60), y: Math.round(h * 0.60) };
     } else {
       for (const k of ['A', 'B']) {
-        state[k].x = clamp(state[k].x, 10, w - 10);
-        state[k].y = clamp(state[k].y, 10, h - 10);
+        state[k].x = clamp(state[k].x, 0, w);
+        state[k].y = clamp(state[k].y, 0, h);
       }
     }
     placeHandle('A'); placeHandle('B');
@@ -172,11 +174,15 @@ function pillText(mm) {
   return (mm / 10).toFixed(1) + ' cm';
 }
 function readoutText(mm) {
+  // Compact on phones (the fraction/mm tail wraps and breaks the number); full on desktop.
+  const narrow = window.innerWidth < 600;
   if (state.unit === 'in') {
     const inch = mm / MM_PER_INCH;
-    return '↔ ' + inch.toFixed(2) + '″ · ' + inchFraction(inch);
+    return narrow ? '↔ ' + inch.toFixed(2) + '″'
+                  : '↔ ' + inch.toFixed(2) + '″ · ' + inchFraction(inch);
   }
-  return '↔ ' + (mm / 10).toFixed(2) + ' cm · ' + mm.toFixed(0) + ' mm';
+  return narrow ? '↔ ' + (mm / 10).toFixed(1) + ' cm'
+                : '↔ ' + (mm / 10).toFixed(2) + ' cm · ' + mm.toFixed(0) + ' mm';
 }
 
 /* ---------- drawing ---------- */
@@ -218,6 +224,22 @@ function vline(x, y0, y1, cssW, color) {
   ctx.stroke();
 }
 
+// Snap step = the ruler's finest tick (1/16" or 1mm), so points land on its lines.
+function gridSpacing() {
+  return state.unit === 'in' ? (state.pxPerMM * MM_PER_INCH) / 16 : state.pxPerMM;
+}
+// Faint full-screen grid shown while snap is on (drawn coarser than the snap step).
+function drawGrid() {
+  const dark = darkMQ.matches;
+  ctx.strokeStyle = dark ? 'rgba(238,240,245,0.09)' : 'rgba(20,21,26,0.08)';
+  ctx.lineWidth = 1 / dpr;
+  const g = state.unit === 'in' ? (state.pxPerMM * MM_PER_INCH) / 2 : state.pxPerMM * 10; // 1/2" or 1cm
+  ctx.beginPath();
+  for (let x = g; x < w; x += g) { const cx = (Math.round(x * dpr) + 0.5) / dpr; ctx.moveTo(cx, 0); ctx.lineTo(cx, h); }
+  for (let y = g; y < h; y += g) { const cy = (Math.round(y * dpr) + 0.5) / dpr; ctx.moveTo(0, cy); ctx.lineTo(w, cy); }
+  ctx.stroke();
+}
+
 // Ruler numbers + unit tag are real HTML (font-hinted, pixel-crisp), rebuilt
 // only when the scale, unit, or viewport changes — not on every handle drag.
 function layoutLabels() {
@@ -242,6 +264,7 @@ function layoutLabels() {
 function draw() {
   const { ink, faint, accent } = colors();
   ctx.clearRect(0, 0, w, h);
+  if (state.snap) drawGrid();
   vline(0, 0, h, 2, ink); // measuring edge, 0 at the top
 
   const pxmm = state.pxPerMM;
@@ -301,6 +324,20 @@ function placeHandle(key) {
   el.style.left = state[key].x + 'px';
   el.style.top = state[key].y + 'px';
 }
+// Move a point, snapping to the ruler grid when enabled. Reaches the true edges
+// (0,0 = the ruler's zero corner) so it can line up with the 0 mark cleanly.
+function setPoint(key, x, y) {
+  x = clamp(x, 0, w);
+  y = clamp(y, 0, h);
+  if (state.snap) {
+    const g = gridSpacing();
+    x = clamp(Math.round(x / g) * g, 0, w);
+    y = clamp(Math.round(y / g) * g, 0, h);
+  }
+  state[key].x = x;
+  state[key].y = y;
+  placeHandle(key);
+}
 function makeDraggable(key) {
   const el = document.getElementById('handle' + key);
   el.addEventListener('pointerdown', (e) => {
@@ -311,9 +348,7 @@ function makeDraggable(key) {
   el.addEventListener('pointermove', (e) => {
     if (!el.hasPointerCapture(e.pointerId)) return;
     handlesUserMoved = true;
-    state[key].x = clamp(e.clientX, 6, w - 6);
-    state[key].y = clamp(e.clientY, 6, h - 6);
-    placeHandle(key);
+    setPoint(key, e.clientX, e.clientY);
     drawSoon();
   });
   const end = (e) => { el.classList.remove('drag'); try { el.releasePointerCapture(e.pointerId); } catch (_) {} };
@@ -328,9 +363,8 @@ function makeDraggable(key) {
     else return;
     e.preventDefault();
     handlesUserMoved = true;
-    state[key].x = clamp(state[key].x, 6, w - 6);
-    state[key].y = clamp(state[key].y, 6, h - 6);
-    placeHandle(key); drawSoon();
+    setPoint(key, state[key].x, state[key].y);
+    drawSoon();
   });
 }
 
@@ -483,6 +517,23 @@ function init() {
   document.getElementById('unitBtn').addEventListener('click', () => {
     setUnit(state.unit === 'in' ? 'cm' : 'in');
   });
+
+  // snap-to-grid toggle
+  state.snap = localStorage.getItem(STORE_SNAP) === '1';
+  const snapBtn = document.getElementById('snapBtn');
+  const updateSnapBtn = () => {
+    snapBtn.classList.toggle('on', state.snap);
+    snapBtn.setAttribute('aria-pressed', String(state.snap));
+  };
+  updateSnapBtn();
+  snapBtn.addEventListener('click', () => {
+    state.snap = !state.snap;
+    localStorage.setItem(STORE_SNAP, state.snap ? '1' : '0');
+    if (state.snap) { setPoint('A', state.A.x, state.A.y); setPoint('B', state.B.x, state.B.y); }
+    updateSnapBtn();
+    draw();
+  });
+
   makeDraggable('A');
   makeDraggable('B');
   wireCalibration();

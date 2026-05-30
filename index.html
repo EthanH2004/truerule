@@ -42,17 +42,19 @@
       <span class="ctl-ico">&#8646;</span><span id="unitLabel">inches</span>
     </button>
     <div class="readout" id="readout">&#8597; —</div>
+    <button id="snapBtn" class="ctl toggle" aria-pressed="false" aria-label="Snap measure points to the ruler grid">
+      <span class="ctl-ico">&#9638;</span><span class="sw"><i></i></span>
+    </button>
     <button id="calBtn" class="ctl primary" aria-label="Calibrate screen">
-      <span class="ctl-ico">&#9974;</span><span>Calibrate</span>
+      <span class="ctl-ico">&#9974;</span><span class="calword">Calibrate</span>
     </button>
   </div>
 
   <!-- Calibration overlay -->
   <div id="cal" class="cal hidden" aria-hidden="true">
     <div class="cal-head">
-      <h1>Calibrate</h1>
-      <p>Hold a card flat on the screen and match its <b>width</b> to the box — the card can hang off the bottom, only the width matters.<br>
-        <b id="calMM">53.98&nbsp;mm</b> wide = <span class="pf" id="calPx">— px</span> &middot; <span id="calPPI">—</span></p>
+      <p class="cal-tip">Hold a card flat &amp; match its <b>width</b> to the box.</p>
+      <p class="cal-metrics"><b id="calMM">53.98&nbsp;mm</b> = <span class="pf" id="calPx">— px</span> &middot; <span id="calPPI">—</span></p>
     </div>
 
     <div class="cal-card" id="calCard">
