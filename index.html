@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
   <meta name="theme-color" content="#11131a" />
-  <meta name="description" content="TrueRule — a physically accurate on-screen ruler for your phone or computer. Calibrate once with any bank card, then measure anything in inches or centimeters." />
+  <meta name="description" content="TrueRule — a physically accurate on-screen ruler for your phone or computer. Auto-detects iPhones; calibrate any device once with a bank card, then measure in inches or centimeters." />
 
   <!-- Full-screen when added to the home screen on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -27,11 +27,8 @@
   <div class="handle" id="handleA" aria-label="Measure point A" role="slider" tabindex="0"><i></i></div>
   <div class="handle" id="handleB" aria-label="Measure point B" role="slider" tabindex="0"><i></i></div>
 
-  <!-- One-time tip -->
-  <div id="hint" class="hint hidden">
-    <span>Tip: tap <b>Calibrate</b> and match a bank card for perfect accuracy.</span>
-    <button id="hintClose" aria-label="Dismiss tip">Got it</button>
-  </div>
+  <!-- Scale status (auto-detected / calibrated / estimated). Tap to calibrate. -->
+  <button id="status" class="status" aria-label="Scale status — tap to calibrate"><i></i><span id="statusText">—</span></button>
 
   <!-- Bottom control bar -->
   <div class="controls" id="controls">
@@ -46,22 +43,27 @@
 
   <!-- Calibration overlay -->
   <div id="cal" class="cal hidden" aria-hidden="true">
+    <div class="cal-head">
+      <h1>Calibrate</h1>
+      <p>Hold a bank or ID card flat on the screen and size the box to match it exactly.<br>
+        <b id="calMM">85.6&nbsp;mm</b> = <span class="pf" id="calPx">— px</span> &middot; <span id="calPPI">—</span></p>
+    </div>
+
     <div class="cal-card" id="calCard">
       <div class="cal-chip"></div>
       <div class="cal-strip"></div>
-      <div class="cal-resize" id="calResize" aria-label="Drag to resize">
-        <span>&#8597; drag to match your card</span>
-      </div>
+      <div class="cal-grip" id="calGrip" aria-label="Drag the edge to resize">&#8597;</div>
     </div>
 
-    <div class="cal-panel">
-      <h1>Calibrate your screen</h1>
-      <p>Lay a bank or ID card flat on the screen and resize the outline until its edges line up exactly. Standard cards are <b>85.6&nbsp;mm</b> wide worldwide, so this makes the ruler physically accurate.</p>
-      <div class="cal-info" id="calInfo">—</div>
-      <div class="cal-fine">
-        <button id="calMinus" aria-label="Smaller">&minus;</button>
-        <span>fine&nbsp;adjust</span>
-        <button id="calPlus" aria-label="Larger">+</button>
+    <div class="cal-bar">
+      <div class="cal-slide-row">
+        <button id="calMinus" class="cal-step" aria-label="Smaller">&minus;</button>
+        <div class="cal-slider" id="calSlider">
+          <div class="cal-track"></div>
+          <div class="cal-fill" id="calFill"></div>
+          <div class="cal-thumb" id="calThumb"></div>
+        </div>
+        <button id="calPlus" class="cal-step" aria-label="Larger">+</button>
       </div>
       <div class="cal-actions">
         <button id="calReset" class="ghost">Auto</button>
