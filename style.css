@@ -8,6 +8,7 @@
   --bar-ink: #f6f7fb;
   --ok: #22c55e;
   --warn: #f59e0b;
+  --faint: rgba(20, 21, 26, 0.55);
 }
 
 * { box-sizing: border-box; }
@@ -34,6 +35,46 @@ html, body {
   inset: 0;
   display: block;
   z-index: 1;
+}
+
+/* ===== Ruler labels (crisp HTML text, not canvas) ===== */
+#labels {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.rlabel {
+  position: absolute;
+  left: 88px;
+  font: 600 17px system-ui, sans-serif;
+  color: var(--ink);
+  transform: translateY(-50%);
+  font-variant-numeric: tabular-nums;
+}
+.rlabel.unit {
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  left: 8px;
+  transform: none;
+  font: 700 13px system-ui, sans-serif;
+  letter-spacing: 0.5px;
+  color: var(--faint);
+}
+
+/* ===== Live measurement capsule (crisp HTML text) ===== */
+#capsule {
+  position: fixed;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  background: var(--accent);
+  color: #fff;
+  font: 700 15px system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  padding: 5px 12px;
+  border-radius: 15px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 /* ===== Measure handles ===== */
@@ -301,5 +342,5 @@ html, body {
 .cal-actions .primary:active { background: var(--accent-press); }
 
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0e0f13; --ink: #eef0f5; }
+  :root { --bg: #0e0f13; --ink: #eef0f5; --faint: rgba(238, 240, 245, 0.55); }
 }

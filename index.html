@@ -20,12 +20,18 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- The ruler + measure line are drawn here -->
+  <!-- The ruler ticks + measure line are drawn here -->
   <canvas id="ruler"></canvas>
+
+  <!-- Ruler numbers + unit tag, as crisp HTML text (not canvas) -->
+  <div id="labels"></div>
 
   <!-- Two draggable measure points -->
   <div class="handle" id="handleA" aria-label="Measure point A" role="slider" tabindex="0"><i></i></div>
   <div class="handle" id="handleB" aria-label="Measure point B" role="slider" tabindex="0"><i></i></div>
+
+  <!-- Live measurement value, as crisp HTML text -->
+  <div id="capsule"></div>
 
   <!-- Scale status (auto-detected / calibrated / estimated). Tap to calibrate. -->
   <button id="status" class="status" aria-label="Scale status — tap to calibrate"><i></i><span id="statusText">—</span></button>

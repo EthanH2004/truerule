@@ -152,6 +152,7 @@ function resize() {
     }
     placeHandle('A'); placeHandle('B');
   }
+  layoutLabels();
   draw();
 }
 
@@ -179,71 +180,93 @@ function readoutText(mm) {
 }
 
 /* ---------- drawing ---------- */
-function draw() {
+const labelsEl = document.getElementById('labels');
+const capsuleEl = document.getElementById('capsule');
+
+function colors() {
   const dark = darkMQ.matches;
-  const ink = dark ? '#eef0f5' : '#14151a';
-  const faint = dark ? 'rgba(238,240,245,0.55)' : 'rgba(20,21,26,0.55)';
-  const accent = '#2563eb';
-
-  ctx.clearRect(0, 0, w, h);
-
-  const tick = (len, y, lw, color) => {
-    const yy = (Math.round(y * dpr) + 0.5) / dpr;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lw;
-    ctx.beginPath();
-    ctx.moveTo(0, yy);
-    ctx.lineTo(len, yy);
-    ctx.stroke();
+  return {
+    ink: dark ? '#eef0f5' : '#14151a',
+    faint: dark ? 'rgba(238,240,245,0.55)' : 'rgba(20,21,26,0.55)',
+    accent: '#2563eb'
   };
+}
 
-  // left baseline (the measuring edge, 0 at the top)
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 2;
-  const x0 = 1 / dpr;
-  ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, h); ctx.stroke();
+// Crisp line on the device-pixel grid. Even device-widths center on an integer
+// pixel, odd widths on a half-pixel — otherwise the line blurs across two rows
+// at 2x/3x. (The old code always used +0.5, which fuzzed every even-width line.)
+function hline(x0, x1, y, cssW, color) {
+  const dw = Math.max(1, Math.round(cssW * dpr));
+  const dy = Math.round(y * dpr);
+  const cy = (dw % 2 ? dy + 0.5 : dy) / dpr;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = dw / dpr;
+  ctx.beginPath();
+  ctx.moveTo(x0, cy);
+  ctx.lineTo(x1, cy);
+  ctx.stroke();
+}
+function vline(x, y0, y1, cssW, color) {
+  const dw = Math.max(1, Math.round(cssW * dpr));
+  const dx = Math.round(x * dpr);
+  const cx = (dw % 2 ? dx + 0.5 : dx) / dpr;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = dw / dpr;
+  ctx.beginPath();
+  ctx.moveTo(cx, y0);
+  ctx.lineTo(cx, y1);
+  ctx.stroke();
+}
 
-  ctx.fillStyle = ink;
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
+// Ruler numbers + unit tag are real HTML (font-hinted, pixel-crisp), rebuilt
+// only when the scale, unit, or viewport changes — not on every handle drag.
+function layoutLabels() {
+  const frag = document.createDocumentFragment();
+  const unit = document.createElement('div');
+  unit.className = 'rlabel unit';
+  unit.textContent = state.unit === 'in' ? 'INCHES' : 'CM';
+  frag.appendChild(unit);
+  const per = state.unit === 'in' ? state.pxPerMM * MM_PER_INCH : state.pxPerMM * 10;
+  if (per > 4) {
+    for (let n = 1; n * per <= h + 1; n++) {
+      const d = document.createElement('div');
+      d.className = 'rlabel';
+      d.textContent = n;
+      d.style.top = (n * per) + 'px';
+      frag.appendChild(d);
+    }
+  }
+  labelsEl.replaceChildren(frag);
+}
+
+function draw() {
+  const { ink, faint, accent } = colors();
+  ctx.clearRect(0, 0, w, h);
+  vline(0, 0, h, 2, ink); // measuring edge, 0 at the top
 
   const pxmm = state.pxPerMM;
   if (state.unit === 'in') {
     const step = (pxmm * MM_PER_INCH) / 16; // 1/16" ticks
     let i = 0;
     for (let y = 0; y <= h + 1; y += step, i++) {
-      if (i % 16 === 0) {
-        tick(78, y, 2, ink);
-        if (i > 0) { ctx.font = '600 17px system-ui, sans-serif'; ctx.fillText(String(i / 16), 86, y); }
-      } else if (i % 8 === 0) tick(50, y, 1.5, ink);
-      else if (i % 4 === 0) tick(36, y, 1.2, faint);
-      else if (i % 2 === 0) tick(26, y, 1, faint);
-      else tick(16, y, 1, faint);
+      if (i % 16 === 0) hline(0, 78, y, 2, ink);
+      else if (i % 8 === 0) hline(0, 50, y, 1.5, ink);
+      else if (i % 4 === 0) hline(0, 36, y, 1, faint);
+      else if (i % 2 === 0) hline(0, 26, y, 1, faint);
+      else hline(0, 16, y, 1, faint);
     }
   } else {
     const step = pxmm; // 1 mm ticks
     let i = 0;
     for (let y = 0; y <= h + 1; y += step, i++) {
-      if (i % 10 === 0) {
-        tick(78, y, 2, ink);
-        if (i > 0) { ctx.font = '600 17px system-ui, sans-serif'; ctx.fillText(String(i / 10), 86, y); }
-      } else if (i % 5 === 0) tick(46, y, 1.5, ink);
-      else tick(24, y, 1, faint);
+      if (i % 10 === 0) hline(0, 78, y, 2, ink);
+      else if (i % 5 === 0) hline(0, 46, y, 1.5, ink);
+      else hline(0, 24, y, 1, faint);
     }
   }
 
-  ctx.font = '700 13px system-ui, sans-serif';
-  ctx.fillStyle = faint;
-  ctx.fillText(state.unit === 'in' ? 'INCHES' : 'CM', 8, 14);
-
-  drawMeasure(accent);
-}
-
-function drawMeasure(accent) {
+  // measure line + endpoint dots (the value capsule is HTML)
   const { A, B } = state;
-  const distPx = Math.hypot(B.x - A.x, B.y - A.y);
-  const mm = distPx / state.pxPerMM;
-
   ctx.strokeStyle = accent;
   ctx.lineWidth = 2.5;
   ctx.setLineDash([2, 6]);
@@ -253,27 +276,15 @@ function drawMeasure(accent) {
   ctx.lineTo(B.x, B.y);
   ctx.stroke();
   ctx.setLineDash([]);
-
   for (const p of [A, B]) {
     ctx.fillStyle = accent;
     ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2); ctx.fill();
   }
 
-  const label = pillText(mm);
-  ctx.font = '700 15px system-ui, sans-serif';
-  const tw = ctx.measureText(label).width;
-  const pad = 11, pw = tw + pad * 2, ph = 30;
-  let px = clamp((A.x + B.x) / 2 - pw / 2, 6, w - pw - 6);
-  let py = clamp((A.y + B.y) / 2 - ph / 2, 6, h - ph - 6);
-  ctx.fillStyle = accent;
-  if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 15); ctx.fill(); }
-  else ctx.fillRect(px, py, pw, ph);
-  ctx.fillStyle = '#fff';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, px + pw / 2, py + ph / 2 + 0.5);
-  ctx.textAlign = 'left';
-
+  const mm = Math.hypot(B.x - A.x, B.y - A.y) / state.pxPerMM;
+  capsuleEl.textContent = pillText(mm);
+  capsuleEl.style.left = clamp((A.x + B.x) / 2, 46, w - 46) + 'px';
+  capsuleEl.style.top = clamp((A.y + B.y) / 2, 22, h - 22) + 'px';
   document.getElementById('readout').textContent = readoutText(mm);
 }
 
@@ -328,6 +339,7 @@ function setUnit(u) {
   state.unit = u;
   document.getElementById('unitLabel').textContent = u === 'in' ? 'inches' : 'cm';
   localStorage.setItem(STORE_UNIT, u);
+  layoutLabels();
   draw();
 }
 
