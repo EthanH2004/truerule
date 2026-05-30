@@ -195,22 +195,32 @@ html, body {
   height: 9%;
   background: rgba(0, 0, 0, 0.5);
 }
+.cal-wlabel {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cdd6ff;
+  pointer-events: none;
+}
 .cal-grip {
   position: absolute;
-  left: 50%;
-  bottom: -20px;
-  transform: translateX(-50%);
+  right: -22px;
+  top: 64px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 116px;
-  height: 38px;
-  border-radius: 999px;
+  width: 44px;
+  height: 66px;
+  border-radius: 14px;
   background: var(--accent);
   color: #fff;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
-  cursor: ns-resize;
+  cursor: ew-resize;
   touch-action: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }

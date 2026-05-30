@@ -340,28 +340,30 @@ const calHead = document.querySelector('.cal-head');
 const calBar = document.querySelector('.cal-bar');
 const calSlider = document.getElementById('calSlider');
 
+// Calibrate by the card's WIDTH (short edge, 53.98 mm). It fits comfortably
+// across any phone, unlike the long edge which is nearly the whole screen.
+// The card's height just follows and may hang off the bottom — that's fine.
 function calBounds() {
   const headH = calHead.getBoundingClientRect().height || 84;
-  const barH = calBar.getBoundingClientRect().height || 160;
   calTop = headH + 14;
-  const avail = h - barH - calTop - 26; // leave room for the grip
   const minPxPerMM = 2.0;
-  const maxPxPerMM = Math.max(minPxPerMM + 1, avail / CARD_LONG_MM);
+  const maxWidth = w - 52; // leave room for the side grip
+  const maxPxPerMM = Math.max(minPxPerMM + 1, maxWidth / CARD_SHORT_MM);
   return { minPxPerMM, maxPxPerMM };
 }
 function calRender() {
   const { minPxPerMM, maxPxPerMM } = calBounds();
   calPxPerMM = clamp(calPxPerMM, minPxPerMM, maxPxPerMM);
-  const cardH = CARD_LONG_MM * calPxPerMM;
   const cardW = CARD_SHORT_MM * calPxPerMM;
+  const cardH = CARD_LONG_MM * calPxPerMM;
   calCard.style.top = calTop + 'px';
-  calCard.style.height = cardH + 'px';
   calCard.style.width = cardW + 'px';
+  calCard.style.height = cardH + 'px';
   const ratio = (calPxPerMM - minPxPerMM) / (maxPxPerMM - minPxPerMM);
   document.getElementById('calFill').style.width = (ratio * 100) + '%';
   document.getElementById('calThumb').style.left = (ratio * 100) + '%';
   const ppi = Math.round(calPxPerMM * MM_PER_INCH * (window.devicePixelRatio || 1));
-  document.getElementById('calPx').textContent = Math.round(cardH) + ' px';
+  document.getElementById('calPx').textContent = Math.round(cardW) + ' px';
   document.getElementById('calPPI').textContent = '≈ ' + ppi + ' PPI';
 }
 function openCal() {
@@ -375,7 +377,7 @@ function closeCal() {
   calEl.setAttribute('aria-hidden', 'true');
 }
 function calNudge(deltaPx) {
-  calPxPerMM = (CARD_LONG_MM * calPxPerMM + deltaPx) / CARD_LONG_MM;
+  calPxPerMM = (CARD_SHORT_MM * calPxPerMM + deltaPx) / CARD_SHORT_MM;
   calRender();
 }
 function sliderSet(clientX) {
@@ -435,7 +437,8 @@ function wireCalibration() {
   capturingDrag(calSlider, (e) => sliderSet(e.clientX));
   capturingDrag(document.getElementById('calGrip'), (e) => {
     const { minPxPerMM, maxPxPerMM } = calBounds();
-    calPxPerMM = clamp((e.clientY - calTop) / CARD_LONG_MM, minPxPerMM, maxPxPerMM);
+    const width = 2 * Math.abs(e.clientX - w / 2); // card is centered
+    calPxPerMM = clamp(width / CARD_SHORT_MM, minPxPerMM, maxPxPerMM);
     calRender();
   });
 }
